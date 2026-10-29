@@ -33,11 +33,14 @@ export const palette = {
 
 export type Colors = typeof palette.dark;
 
+// Saira is the closest open font to F1's own typeface; its wide cut stands in for F1's "Wide" display style.
 export const fonts = {
-  regular: 'TitilliumWeb_400Regular',
-  semibold: 'TitilliumWeb_600SemiBold',
-  bold: 'TitilliumWeb_700Bold',
-  black: 'TitilliumWeb_900Black',
+  regular: 'Saira-Regular',
+  medium: 'Saira-Medium',
+  semibold: 'Saira-SemiBold',
+  bold: 'Saira-Bold',
+  wide: 'SairaWide-Bold',
+  black: 'SairaWide-Black',
 };
 
 export function useScheme(): 'light' | 'dark' {

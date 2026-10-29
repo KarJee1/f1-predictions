@@ -1,15 +1,9 @@
-import {
-  TitilliumWeb_400Regular,
-  TitilliumWeb_600SemiBold,
-  TitilliumWeb_700Bold,
-  TitilliumWeb_900Black,
-  useFonts,
-} from '@expo-google-fonts/titillium-web';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants from 'expo-constants';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -35,10 +29,12 @@ const persistOptions = { persister, maxAge: WEEK, buster: Constants.expoConfig?.
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    TitilliumWeb_400Regular,
-    TitilliumWeb_600SemiBold,
-    TitilliumWeb_700Bold,
-    TitilliumWeb_900Black,
+    'Saira-Regular': require('../assets/fonts/Saira-Regular.ttf'),
+    'Saira-Medium': require('../assets/fonts/Saira-Medium.ttf'),
+    'Saira-SemiBold': require('../assets/fonts/Saira-SemiBold.ttf'),
+    'Saira-Bold': require('../assets/fonts/Saira-Bold.ttf'),
+    'SairaWide-Bold': require('../assets/fonts/SairaWide-Bold.ttf'),
+    'SairaWide-Black': require('../assets/fonts/SairaWide-Black.ttf'),
   });
 
   useEffect(() => {
