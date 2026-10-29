@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from . import model as models
-from . import publish
+from . import publish, social
 from .sources import timing
 from .config import settings
 from .dataset import build_history, schedule_frame
@@ -264,6 +264,22 @@ class Pipeline:
             newly_scored = True
             summary["actions"].append(f"scored {key}")
         last_race = finished.iloc[-1] if not finished.empty else None
+
+        # Friend groups: score everyone's synced picks for races that finished in the last week.
+        if settings.groups:
+            done = set(state.setdefault("group_scored", []))
+            for _, race in finished[finished["race_start"] > now - timedelta(days=7)].iterrows():
+                key = f"{int(race['season'])}-{int(race['round'])}"
+                results = self.store.read_json(f"v1/races/{key.replace('-', '/')}/results.json")
+                if key in done or not results:
+                    continue
+                try:
+                    n = social.score_race(int(race["season"]), int(race["round"]), results["results"])
+                except Exception as exc:  # leave it for the next run
+                    log.warning("Scoring group picks for %s failed: %s", key, exc)
+                    continue
+                state["group_scored"].append(key)
+                summary["actions"].append(f"scored {n} group picks for {key}")
 
         if newly_scored:
             self.refresh_history()

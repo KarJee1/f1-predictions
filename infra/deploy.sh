@@ -3,13 +3,15 @@
 # the prediction job as a Cloud Run job, and two Cloud Scheduler triggers.
 #
 # Usage (from the repo root, after `gcloud auth login`):
-#   PROJECT_ID=my-project ./infra/deploy.sh
+#   PROJECT_ID=my-project BUNDLE_ID=com.example.app ./infra/deploy.sh
+# BUNDLE_ID is the iOS app's bundle identifier; without it, sign-in and friend groups stay switched off.
 # Re-running it is safe; it updates what already exists.
 set -euo pipefail
 
 : "${PROJECT_ID:?Set PROJECT_ID to your GCP project id}"
 REGION="${REGION:-us-central1}"          # us-central1 keeps Cloud Storage inside the always-free tier
 BUCKET="${BUCKET:-${PROJECT_ID}-f1-data}"
+BUNDLE_ID="${BUNDLE_ID:-}"
 SA_NAME="f1-backend"
 SA="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,7 +19,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 gcloud config set project "$PROJECT_ID" >/dev/null
 echo "==> Enabling APIs"
 gcloud services enable run.googleapis.com cloudscheduler.googleapis.com cloudbuild.googleapis.com \
-  artifactregistry.googleapis.com storage.googleapis.com iam.googleapis.com
+  artifactregistry.googleapis.com storage.googleapis.com iam.googleapis.com \
+  firestore.googleapis.com secretmanager.googleapis.com
 
 echo "==> Bucket gs://$BUCKET"
 gcloud storage buckets describe "gs://$BUCKET" >/dev/null 2>&1 || \
@@ -37,14 +40,27 @@ for attempt in 1 2 3 4 5 6 7 8 9 10; do
   sleep 10
 done
 
+echo "==> Firestore (accounts, friend groups and their picks)"
+gcloud firestore databases describe --database="(default)" >/dev/null 2>&1 || \
+  gcloud firestore databases create --database="(default)" --location="$REGION" --type=firestore-native
+gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$SA" \
+  --role=roles/datastore.user --condition=None >/dev/null
+
+echo "==> Session signing key"
+gcloud secrets describe f1-session-secret >/dev/null 2>&1 || \
+  openssl rand -hex 32 | tr -d '\n' | gcloud secrets create f1-session-secret --data-file=- --replication-policy=automatic
+gcloud secrets add-iam-policy-binding f1-session-secret --member="serviceAccount:$SA" \
+  --role=roles/secretmanager.secretAccessor >/dev/null
+
 echo "==> API service"
 gcloud run deploy f1-api --source "$ROOT/api" --region "$REGION" --service-account "$SA" \
-  --allow-unauthenticated --set-env-vars "F1_BUCKET=$BUCKET" \
+  --allow-unauthenticated --set-env-vars "F1_BUCKET=$BUCKET,APPLE_BUNDLE_ID=$BUNDLE_ID" \
+  --set-secrets "SESSION_SECRET=f1-session-secret:latest" \
   --memory 512Mi --cpu 1 --min-instances 0 --max-instances 3 --concurrency 80 --quiet
 
 echo "==> Prediction job"
 gcloud run jobs deploy f1-pipeline --source "$ROOT/pipeline" --region "$REGION" --service-account "$SA" \
-  --set-env-vars "F1_STORE=gs://$BUCKET,F1_SIMULATIONS=20000" \
+  --set-env-vars "F1_STORE=gs://$BUCKET,F1_SIMULATIONS=20000,F1_GROUPS=1" \
   --memory 2Gi --cpu 1 --task-timeout 7200 --max-retries 0 --quiet
 gcloud run jobs add-iam-policy-binding f1-pipeline --region "$REGION" \
   --member="serviceAccount:$SA" --role=roles/run.invoker >/dev/null

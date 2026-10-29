@@ -22,6 +22,7 @@ class Settings:
     seed_dir: Path | None = field(default_factory=lambda: Path(os.environ["F1_SEED"]) if os.environ.get("F1_SEED") else None)
     # Turn off to build history from results only (fast, but no practice pace or rain).
     use_timing: bool = field(default_factory=lambda: _env("F1_TIMING", "1") == "1")
+    groups: bool = field(default_factory=lambda: _env("F1_GROUPS", "0") == "1")  # score friend-group picks in Firestore
     n_simulations: int = field(default_factory=lambda: int(_env("F1_SIMULATIONS", "20000")))
     # Seasons with a big regulation change; older data is down-weighted more across these.
     regulation_resets: tuple[int, ...] = (2017, 2022, 2026)
