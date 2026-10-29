@@ -176,9 +176,12 @@ function NextRace({ race, prediction }: { race: RaceInfo; prediction: Prediction
 
 function NewsRow({ item }: { item: NewsItem }) {
   const c = useColors();
+  // Drop the thumbnail if it fails to load rather than leaving an empty box.
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = imageFailed ? null : item.image;
   return (
     <Pressable onPress={() => WebBrowser.openBrowserAsync(item.url)} style={({ pressed }) => [styles.news, pressed && { opacity: 0.7 }]}>
-      <View style={{ flex: 1, paddingRight: item.image ? 12 : 0 }}>
+      <View style={{ flex: 1, paddingRight: image ? 12 : 0 }}>
         <Txt variant="label" numberOfLines={3} style={{ fontSize: 15, lineHeight: 20 }}>
           {item.title}
         </Txt>
@@ -189,7 +192,9 @@ function NewsRow({ item }: { item: NewsItem }) {
           </Txt>
         </View>
       </View>
-      {item.image ? <Image source={{ uri: item.image }} style={[styles.thumb, { backgroundColor: c.surfaceAlt }]} /> : null}
+      {image ? (
+        <Image source={{ uri: image }} onError={() => setImageFailed(true)} style={[styles.thumb, { backgroundColor: c.surfaceAlt }]} />
+      ) : null}
     </Pressable>
   );
 }

@@ -95,6 +95,11 @@ def _lower_first(text: str) -> str:
 
 def _sentence(parts: list[str]) -> str:
     parts = [parts[0]] + [_lower_first(p) for p in parts[1:]]
+    # "X lately, Y lately and Z lately" reads badly: keep the time word only on the last part that has it.
+    for word in (" lately", " recently"):
+        has = [i for i, p in enumerate(parts) if p.endswith(word)]
+        for i in has[:-1]:
+            parts[i] = parts[i][: -len(word)]
     if len(parts) == 1:
         return parts[0] + "."
     return ", ".join(parts[:-1]) + " and " + parts[-1] + "."
