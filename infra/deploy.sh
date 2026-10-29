@@ -43,8 +43,16 @@ done
 echo "==> Firestore (accounts, friend groups and their picks)"
 gcloud firestore databases describe --database="(default)" >/dev/null 2>&1 || \
   gcloud firestore databases create --database="(default)" --location="$REGION" --type=firestore-native
-gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$SA" \
-  --role=roles/datastore.user --condition=None >/dev/null
+# Enabling APIs edits the project's IAM policy in the background, so this can hit a concurrent-change conflict; retry.
+for attempt in 1 2 3 4 5 6; do
+  if gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$SA" \
+    --role=roles/datastore.user --condition=None >/dev/null 2>&1; then
+    break
+  fi
+  [ "$attempt" = 6 ] && { echo "Could not grant Firestore access to $SA"; exit 1; }
+  echo "    IAM policy busy, retrying..."
+  sleep $((attempt * 5))
+done
 
 echo "==> Session signing key"
 gcloud secrets describe f1-session-secret >/dev/null 2>&1 || \
