@@ -36,9 +36,9 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#15151E",
+          "backgroundColor": "#231111",
           "dark": {
-            "backgroundColor": "#15151E"
+            "backgroundColor": "#231111"
           }
         }
       ]
@@ -46,7 +46,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "backgroundColor": "#15151E",
+    "backgroundColor": "#231111",
     "owner": "karthikjee",
     "extra": {
       "eas": {
