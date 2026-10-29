@@ -148,7 +148,8 @@ def practice_features(season: int, rnd: int) -> pd.DataFrame:
         if not best.empty:
             best_gaps.append((best / best.min() - 1) * 100)
         lr = _long_run_pace(laps)
-        if len(lr) >= 5:
+        # Use the session where most drivers did race-pace runs (usually FP2), not just the latest.
+        if len(lr) >= 5 and (long_run is None or len(lr) > len(long_run)):
             long_run = (lr / lr.min() - 1) * 100
     if not best_gaps and long_run is None:
         return pd.DataFrame(columns=["fp_best_gap_pct", "fp_longrun_gap_pct"])

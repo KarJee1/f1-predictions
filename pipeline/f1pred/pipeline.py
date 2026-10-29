@@ -286,6 +286,11 @@ class Pipeline:
             self.train()
             summary["actions"].append("retrained")
 
+        # A fresh deployment has no accuracy history yet: fill it in with out-of-sample predictions.
+        if last_race is not None and self.store.read_json(f"v1/accuracy/{int(last_race['season'])}.json") is None:
+            self.backfill_accuracy(int(last_race["season"]))
+            summary["actions"].append("backfilled accuracy")
+
         # 2. Predict the next race.
         upcoming = sched[sched["race_start"] + RACE_DONE_AFTER >= now]
         prediction = None
