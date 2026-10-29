@@ -189,9 +189,11 @@ class Pipeline:
                 rows["fp_best_gap_pct"] = rows["code"].map(fp["fp_best_gap_pct"])
                 rows["fp_longrun_gap_pct"] = rows["code"].map(fp["fp_longrun_gap_pct"])
         if stage == "quali":
-            q = self._quali(season, rnd).set_index("code")
-            rows["quali_pos"] = rows["code"].map(q["quali_pos"])
-            rows["quali_best"] = rows["code"].map(q["quali_best"])
+            q = self._quali(season, rnd)
+            if not q.empty:
+                q = q.dropna(subset=["code"]).drop_duplicates("code").set_index("code")
+                rows["quali_pos"] = rows["code"].map(q["quali_pos"])
+                rows["quali_best"] = rows["code"].map(q["quali_best"])
             # The official grid (with penalties) is only published with the result.
             rows["grid"] = rows["quali_pos"]
         weather = race_forecast(race["lat"], race["lon"], race["race_start"].to_pydatetime()) if pd.notna(race["race_start"]) else None
