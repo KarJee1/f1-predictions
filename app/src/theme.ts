@@ -33,14 +33,13 @@ export const palette = {
 
 export type Colors = typeof palette.dark;
 
-// Saira is the closest open font to F1's own typeface; its wide cut stands in for F1's "Wide" display style.
+// Barlow for text; its semi-condensed heavy italic for big titles, like motorsport broadcast graphics.
 export const fonts = {
-  regular: 'Saira-Regular',
-  medium: 'Saira-Medium',
-  semibold: 'Saira-SemiBold',
-  bold: 'Saira-Bold',
-  wide: 'SairaWide-Bold',
-  black: 'SairaWide-Black',
+  regular: 'Barlow_400Regular',
+  medium: 'Barlow_500Medium',
+  semibold: 'Barlow_600SemiBold',
+  bold: 'Barlow_700Bold',
+  black: 'BarlowSemiCondensed_800ExtraBold_Italic',
 };
 
 export function useScheme(): 'light' | 'dark' {

@@ -19,7 +19,7 @@ import { fonts, teamColor, useColors } from '../theme';
 type Variant = 'display' | 'title' | 'heading' | 'body' | 'label' | 'caption' | 'number';
 
 const variants: Record<Variant, { fontFamily: string; fontSize: number; lineHeight: number; letterSpacing?: number }> = {
-  display: { fontFamily: fonts.black, fontSize: 32, lineHeight: 36, letterSpacing: -0.5 },
+  display: { fontFamily: fonts.black, fontSize: 34, lineHeight: 38 },
   title: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 26 },
   heading: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 21 },

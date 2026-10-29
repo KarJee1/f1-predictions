@@ -3,7 +3,8 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants from 'expo-constants';
-import { useFonts } from 'expo-font';
+import { Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold, Barlow_700Bold, useFonts } from '@expo-google-fonts/barlow';
+import { BarlowSemiCondensed_800ExtraBold_Italic } from '@expo-google-fonts/barlow-semi-condensed';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -29,12 +30,11 @@ const persistOptions = { persister, maxAge: WEEK, buster: Constants.expoConfig?.
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    'Saira-Regular': require('../assets/fonts/Saira-Regular.ttf'),
-    'Saira-Medium': require('../assets/fonts/Saira-Medium.ttf'),
-    'Saira-SemiBold': require('../assets/fonts/Saira-SemiBold.ttf'),
-    'Saira-Bold': require('../assets/fonts/Saira-Bold.ttf'),
-    'SairaWide-Bold': require('../assets/fonts/SairaWide-Bold.ttf'),
-    'SairaWide-Black': require('../assets/fonts/SairaWide-Black.ttf'),
+    Barlow_400Regular,
+    Barlow_500Medium,
+    Barlow_600SemiBold,
+    Barlow_700Bold,
+    BarlowSemiCondensed_800ExtraBold_Italic,
   });
 
   useEffect(() => {
