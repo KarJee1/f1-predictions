@@ -37,7 +37,7 @@ gcloud run deploy f1-api --source "$ROOT/api" --region "$REGION" --service-accou
 echo "==> Prediction job"
 gcloud run jobs deploy f1-pipeline --source "$ROOT/pipeline" --region "$REGION" --service-account "$SA" \
   --set-env-vars "F1_STORE=gs://$BUCKET,F1_SIMULATIONS=20000" \
-  --memory 2Gi --cpu 1 --task-timeout 3600 --max-retries 0 --quiet
+  --memory 2Gi --cpu 1 --task-timeout 7200 --max-retries 0 --quiet
 gcloud run jobs add-iam-policy-binding f1-pipeline --region "$REGION" \
   --member="serviceAccount:$SA" --role=roles/run.invoker >/dev/null
 
@@ -56,10 +56,11 @@ schedule() {
 schedule f1-pipeline-race-weekend "10 * * * 0,1,4,5,6"
 schedule f1-pipeline-midweek "10 6,18 * * 2,3"
 
-echo "==> First run (takes a few minutes)"
-gcloud run jobs execute f1-pipeline --region "$REGION" --wait
+echo "==> First run (the first one backfills history and takes 30-60 minutes; it runs in the background)"
+gcloud run jobs execute f1-pipeline --region "$REGION" --async
 
 API_URL="$(gcloud run services describe f1-api --region "$REGION" --format='value(status.url)')"
 echo
 echo "Done. API: $API_URL"
-echo "Check it: curl $API_URL/v1/meta.json"
+echo "Once the first run finishes, check it: curl $API_URL/v1/meta.json"
+echo "Progress: https://console.cloud.google.com/run/jobs/details/$REGION/f1-pipeline/executions?project=$PROJECT_ID"
