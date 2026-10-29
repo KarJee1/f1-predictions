@@ -68,7 +68,7 @@ function RootNav() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="driver/[id]"
-          options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: c.background } }}
+          options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: c.background, width: '100%', maxWidth: 760, alignSelf: 'center' } }}
         />
         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
       </Stack>
