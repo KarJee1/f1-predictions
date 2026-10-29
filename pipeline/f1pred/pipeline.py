@@ -71,6 +71,15 @@ class Pipeline:
         if blob:
             stored = pd.read_parquet(io.BytesIO(blob))
             keep = stored[stored["season"] < this_year]
+            if settings.use_timing:
+                # Seasons stored before practice timing was available get rebuilt once with it (OpenF1 starts in 2023).
+                recent = keep[keep["season"] >= 2023]
+                if "fp_best_gap_pct" in recent:
+                    has = recent.groupby("season")["fp_best_gap_pct"].apply(lambda v: v.notna().any())
+                    bare = set(has[~has].index)
+                else:
+                    bare = set(recent["season"])
+                keep = keep[~keep["season"].isin(bare)]
             missing = [s for s in seasons if s == this_year or s not in set(keep["season"])]
             history = pd.concat([keep, build_history(self.client, missing, with_timing=settings.use_timing)], ignore_index=True)
         else:
