@@ -5,7 +5,11 @@ import {
   TitilliumWeb_900Black,
   useFonts,
 } from '@expo-google-fonts/titillium-web';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import Constants from 'expo-constants';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -22,7 +26,11 @@ export const unstable_settings = { anchor: '(tabs)' };
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+// The last data the app loaded is kept on the device for a week, so it opens instantly and works offline.
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: WEEK } } });
+const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'query-cache' });
+const persistOptions = { persister, maxAge: WEEK, buster: Constants.expoConfig?.version ?? '' };
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -44,11 +52,11 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
         <ThemePreferenceProvider>
           <RootNav />
         </ThemePreferenceProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </GestureHandlerRootView>
   );
 }
