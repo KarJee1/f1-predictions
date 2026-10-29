@@ -138,6 +138,13 @@ def standings_doc(driver_standings: list[dict], constructor_standings: list[dict
                 "wins": int(s["wins"]),
             }
         )
+    # Prefer the team from the latest entry list: a driver who changed teams mid-season is listed
+    # under every team they drove for in the standings.
+    current = {d["driver_id"]: d for d in prediction["drivers"]} if prediction else {}
+    for d in drivers:
+        if d["driver_id"] in current:
+            e = current[d["driver_id"]]
+            d.update(team_id=e["team_id"], team_name=e.get("team_name", d["team_name"]), team_color=e.get("team_color", d["team_color"]))
     known = {d["driver_id"] for d in drivers}
     if prediction:  # drivers who haven't scored a championship entry yet (e.g. a mid-season replacement)
         for d in prediction["drivers"]:
