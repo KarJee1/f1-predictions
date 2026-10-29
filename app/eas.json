@@ -1,0 +1,23 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
+    },
+    "production": {
+      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -1,0 +1,5 @@
+.cache
+.store
+tests
+__pycache__
+*.egg-info
