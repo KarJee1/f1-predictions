@@ -152,6 +152,7 @@ def schedule_frame(client: Jolpica, season: int) -> pd.DataFrame:
                 "fp2_start": session_start(race, "SecondPractice"),
                 "fp3_start": session_start(race, "ThirdPractice"),
                 "quali_start": session_start(race, "Qualifying"),
+                "sprint_quali_start": session_start(race, "SprintQualifying") or session_start(race, "SprintShootout"),
                 "sprint_start": session_start(race, "Sprint"),
             }
         )

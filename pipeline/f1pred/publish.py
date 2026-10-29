@@ -41,6 +41,7 @@ def race_info(race: pd.Series) -> dict:
             "fp2": _iso(race["fp2_start"]),
             "fp3": _iso(race["fp3_start"]),
             "quali": _iso(race["quali_start"]),
+            "sprint_quali": _iso(race.get("sprint_quali_start")),
             "sprint": _iso(race["sprint_start"]),
         },
     }

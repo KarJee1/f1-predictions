@@ -45,6 +45,7 @@ export function upcomingSessions(race: RaceInfo): NextSession[] {
     ['Practice 1', race.sessions.fp1],
     ['Practice 2', race.sessions.fp2],
     ['Practice 3', race.sessions.fp3],
+    ['Sprint Qualifying', race.sessions.sprint_quali ?? null],
     ['Sprint', race.sessions.sprint],
     ['Qualifying', race.sessions.quali],
     ['Race', race.race_start],

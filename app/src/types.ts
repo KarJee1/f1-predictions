@@ -5,6 +5,7 @@ export type Sessions = {
   fp2: string | null;
   fp3: string | null;
   quali: string | null;
+  sprint_quali?: string | null;
   sprint: string | null;
 };
 
