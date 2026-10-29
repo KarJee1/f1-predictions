@@ -26,8 +26,16 @@ gcloud storage buckets describe "gs://$BUCKET" >/dev/null 2>&1 || \
 echo "==> Service account"
 gcloud iam service-accounts describe "$SA" >/dev/null 2>&1 || \
   gcloud iam service-accounts create "$SA_NAME" --display-name="F1 predictions backend"
-gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$SA" \
-  --role=roles/storage.objectAdmin >/dev/null
+# A new service account can take a minute to become visible to other APIs, so retry the grant.
+for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  if gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$SA" \
+    --role=roles/storage.objectAdmin >/dev/null 2>&1; then
+    break
+  fi
+  [ "$attempt" = 10 ] && { echo "Could not grant bucket access to $SA"; exit 1; }
+  echo "    waiting for the service account to propagate..."
+  sleep 10
+done
 
 echo "==> API service"
 gcloud run deploy f1-api --source "$ROOT/api" --region "$REGION" --service-account "$SA" \
