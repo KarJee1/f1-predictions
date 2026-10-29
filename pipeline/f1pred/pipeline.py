@@ -122,7 +122,11 @@ class Pipeline:
         cols = ["driver_id", "code", "number", "first_name", "last_name", "constructor_id", "constructor_name"]
         lineup = last[cols].drop_duplicates("code").set_index("code", drop=False)
 
-        session = timing.session_entries(int(race["season"]), int(race["round"]), session_name) if session_name else pd.DataFrame()
+        try:
+            session = timing.session_entries(int(race["season"]), int(race["round"]), session_name) if session_name else pd.DataFrame()
+        except Exception:
+            log.exception("Entry list failed; using the last race's lineup")
+            session = pd.DataFrame()
         if session.empty:
             return lineup.reset_index(drop=True)
 
@@ -161,7 +165,11 @@ class Pipeline:
             rows.append({"code": q["Driver"].get("code"), "quali_pos": int(q["position"]), "quali_best": min(times) if times else np.nan})
         if rows:
             return pd.DataFrame(rows)
-        return timing.quali_results(season, rnd)
+        try:
+            return timing.quali_results(season, rnd)
+        except Exception:
+            log.exception("Qualifying from timing failed")
+            return pd.DataFrame(columns=["code", "quali_pos", "quali_best"])
 
     def predict(self, race: pd.Series, stage: str, session_name: str | None, now: datetime) -> dict:
         season, rnd = int(race["season"]), int(race["round"])
@@ -172,7 +180,11 @@ class Pipeline:
             quali_pos=np.nan, quali_best=np.nan, fp_best_gap_pct=np.nan, fp_longrun_gap_pct=np.nan, rain=np.nan,
         )
         if stage in ("practice", "quali"):
-            fp = timing.practice_features(season, rnd)
+            try:
+                fp = timing.practice_features(season, rnd)
+            except Exception:
+                log.exception("Practice timing failed; predicting without it")
+                fp = pd.DataFrame()
             if not fp.empty:
                 rows["fp_best_gap_pct"] = rows["code"].map(fp["fp_best_gap_pct"])
                 rows["fp_longrun_gap_pct"] = rows["code"].map(fp["fp_longrun_gap_pct"])

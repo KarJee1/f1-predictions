@@ -87,8 +87,12 @@ def _timing_for(season: int, rnd: int) -> tuple[pd.DataFrame, float | None]:
     blob, meta = store.read_bytes(f"{key}.parquet"), store.read_json(f"{key}.json")
     if blob is not None and meta is not None:
         return pd.read_parquet(io.BytesIO(blob)), meta["rain"]
-    fp = timing.practice_features(season, rnd)
-    rain = timing.race_rain(season, rnd)
+    try:
+        fp = timing.practice_features(season, rnd)
+        rain = timing.race_rain(season, rnd)
+    except Exception:  # timing data is a bonus; never let it stop the pipeline
+        log.exception("Timing data failed for %s round %s", season, rnd)
+        return pd.DataFrame(columns=["fp_best_gap_pct", "fp_longrun_gap_pct"]), None
     if fp.empty and rain is None:
         return fp, rain  # nothing loaded (often a network problem); don't cache, try again next time
     buf = io.BytesIO()
