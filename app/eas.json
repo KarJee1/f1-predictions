@@ -7,14 +7,14 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_API_URL": "REPLACE_WITH_API_URL" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
     },
     "preview": {
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_API_URL": "REPLACE_WITH_API_URL" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
     },
     "production": {
-      "env": { "EXPO_PUBLIC_API_URL": "REPLACE_WITH_API_URL" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
     }
   },
   "submit": {
