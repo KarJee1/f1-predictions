@@ -3,8 +3,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants from 'expo-constants';
-import { Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold, Barlow_700Bold, useFonts } from '@expo-google-fonts/barlow';
-import { BarlowSemiCondensed_800ExtraBold_Italic } from '@expo-google-fonts/barlow-semi-condensed';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -30,11 +29,12 @@ const persistOptions = { persister, maxAge: WEEK, buster: Constants.expoConfig?.
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    Barlow_400Regular,
-    Barlow_500Medium,
-    Barlow_600SemiBold,
-    Barlow_700Bold,
-    BarlowSemiCondensed_800ExtraBold_Italic,
+    'Archivo-Regular': require('../assets/fonts/Archivo-Regular.ttf'),
+    'Archivo-Medium': require('../assets/fonts/Archivo-Medium.ttf'),
+    'Archivo-SemiBold': require('../assets/fonts/Archivo-SemiBold.ttf'),
+    'Archivo-Bold': require('../assets/fonts/Archivo-Bold.ttf'),
+    'ArchivoExpanded-Bold': require('../assets/fonts/ArchivoExpanded-Bold.ttf'),
+    'ArchivoExpanded-Black': require('../assets/fonts/ArchivoExpanded-Black.ttf'),
   });
 
   useEffect(() => {

@@ -19,8 +19,8 @@ import { fonts, teamColor, useColors } from '../theme';
 type Variant = 'display' | 'title' | 'heading' | 'body' | 'label' | 'caption' | 'number';
 
 const variants: Record<Variant, { fontFamily: string; fontSize: number; lineHeight: number; letterSpacing?: number }> = {
-  display: { fontFamily: fonts.black, fontSize: 34, lineHeight: 38 },
-  title: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 26 },
+  display: { fontFamily: fonts.black, fontSize: 30, lineHeight: 36, letterSpacing: -0.3 },
+  title: { fontFamily: fonts.wide, fontSize: 19, lineHeight: 25 },
   heading: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 21 },
   label: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 17, letterSpacing: 0.2 },

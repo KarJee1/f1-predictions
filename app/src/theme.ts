@@ -33,13 +33,14 @@ export const palette = {
 
 export type Colors = typeof palette.dark;
 
-// Barlow for text; its semi-condensed heavy italic for big titles, like motorsport broadcast graphics.
+// Archivo for text; its expanded cut for titles, close to F1's own wide display style.
 export const fonts = {
-  regular: 'Barlow_400Regular',
-  medium: 'Barlow_500Medium',
-  semibold: 'Barlow_600SemiBold',
-  bold: 'Barlow_700Bold',
-  black: 'BarlowSemiCondensed_800ExtraBold_Italic',
+  regular: 'Archivo-Regular',
+  medium: 'Archivo-Medium',
+  semibold: 'Archivo-SemiBold',
+  bold: 'Archivo-Bold',
+  wide: 'ArchivoExpanded-Bold',
+  black: 'ArchivoExpanded-Black',
 };
 
 export function useScheme(): 'light' | 'dark' {
