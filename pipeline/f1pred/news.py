@@ -59,9 +59,13 @@ def fetch_news(since: datetime, limit: int = 60, per_source: int = 15) -> list[d
                 continue
             if source in TAG_FILTER and TAG_FILTER[source] not in {t.get("term") for t in entry.get("tags", [])}:
                 continue
+            title = entry.get("title", "").strip()
+            # Feeds sometimes repeat a story under a second URL; key on the title as well.
+            if any(i["title"].casefold() == title.casefold() for i in items.values()):
+                continue
             summary = _TAGS.sub("", entry.get("summary", "")).strip()
             items[link] = {
-                "title": entry.get("title", "").strip(),
+                "title": title,
                 "url": link,
                 "source": source,
                 "published_at": published.isoformat(),

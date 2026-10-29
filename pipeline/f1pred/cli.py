@@ -12,6 +12,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
+from datetime import datetime, timedelta, timezone
 
 from .evaluate import backtest, summarize
 from .features import build_features
@@ -44,7 +46,26 @@ def main(argv: list[str] | None = None) -> None:
     elif args.cmd == "backfill-accuracy":
         print(json.dumps(pipe.backfill_accuracy(args.season), indent=2))
     elif args.cmd == "run":
-        print(json.dumps(pipe.run(force=args.force), indent=2))
+        _locked_run(pipe, force=args.force)
+
+
+LOCK_KEY = "data/run-lock.json"
+LOCK_TTL = timedelta(hours=2, minutes=30)  # longer than the job's task timeout, so a crashed run can't block forever
+
+
+def _locked_run(pipe: Pipeline, force: bool) -> None:
+    """Run one tick unless another run is still going (the hourly schedule can overlap a long first run)."""
+    now = datetime.now(timezone.utc)
+    lock = pipe.store.read_json(LOCK_KEY) or {}
+    started = lock.get("started_at")
+    if started and now - datetime.fromisoformat(started) < LOCK_TTL and not force:
+        print(json.dumps({"skipped": "another run is in progress", "since": started}))
+        return
+    pipe.store.write_json(LOCK_KEY, {"started_at": now.isoformat(), "execution": os.environ.get("CLOUD_RUN_EXECUTION")})
+    try:
+        print(json.dumps(pipe.run(force=force), indent=2))
+    finally:
+        pipe.store.write_json(LOCK_KEY, {"started_at": None})
 
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: c.muted,
         tabBarStyle: { backgroundColor: c.tabBar, borderTopColor: c.border },
         tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11, lineHeight: 14 },
+        // Keep content at a readable width on iPad.
+        sceneStyle: { width: '100%', maxWidth: 760, alignSelf: 'center' },
       }}
     >
       <Tabs.Screen

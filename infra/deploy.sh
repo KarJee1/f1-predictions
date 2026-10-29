@@ -64,8 +64,10 @@ schedule() {
 schedule f1-pipeline-race-weekend "10 * * * 0,1,4,5,6"
 schedule f1-pipeline-midweek "10 6,18 * * 2,3"
 
-echo "==> First run (the first one backfills history and takes 30-60 minutes; it runs in the background)"
-gcloud run jobs execute f1-pipeline --region "$REGION" --async
+if [ -z "$(gcloud run jobs executions list --job f1-pipeline --region "$REGION" --limit 1 --format='value(name)')" ]; then
+  echo "==> First run (the first one backfills history and takes 30-60 minutes; it runs in the background)"
+  gcloud run jobs execute f1-pipeline --region "$REGION" --async
+fi
 
 API_URL="$(gcloud run services describe f1-api --region "$REGION" --format='value(status.url)')"
 echo
