@@ -4,8 +4,8 @@ import type { Accuracy, Meta, News, Prediction, Results, Standings } from './typ
 
 // Set EXPO_PUBLIC_API_URL to the Cloud Run URL (see infra/deploy.sh).
 // EXPO_PUBLIC_USE_SAMPLE_DATA=1 serves the bundled sample files instead, for working on the UI offline.
-const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/$/, '');
-const USE_SAMPLE = process.env.EXPO_PUBLIC_USE_SAMPLE_DATA === '1';
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/$/, '');
+export const USE_SAMPLE = process.env.EXPO_PUBLIC_USE_SAMPLE_DATA === '1';
 
 export class NotFound extends Error {}
 

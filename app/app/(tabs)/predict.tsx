@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ApiError, useAccount } from '@/src/account';
 import { fetchPrediction, fetchResults, NotFound, useMeta, usePrediction } from '@/src/api';
 import { DragList } from '@/src/components/DragList';
 import { Card, Divider, DriverName, Loading, Message, SectionTitle, TeamStripe, Txt } from '@/src/components/ui';
@@ -35,9 +36,41 @@ export default function PredictScreen() {
     return [...kept, ...model.filter((id) => !kept.includes(id))];
   }, [drivers, picks, byId]);
 
+  // Friend groups: keep the server's copy of these picks in step with the phone's.
+  const { signedIn, call } = useAccount();
+  const [syncError, setSyncError] = useState(false);
+
+  const sync = useCallback(
+    async (p: Picks) => {
+      try {
+        await call('PUT', `/picks/${p.season}/${p.round}`, { order: p.order });
+        save({ ...p, synced: true });
+        setSyncError(false);
+      } catch (e) {
+        // A 409 means picks have locked or aren't open yet; nothing to retry.
+        setSyncError(!(e instanceof ApiError && e.status === 409));
+      }
+    },
+    [call, save],
+  );
+
+  useEffect(() => {
+    if (!signedIn || !loaded || locked || !race) return;
+    if (picks && !picks.synced) sync(picks);
+    if (!picks) {
+      // Picks made on another phone come back here.
+      call<{ order: string[]; saved_at: string }>('GET', `/picks/${race.season}/${race.round}`)
+        .then((p) => Array.isArray(p.order) && save({ season: race.season, round: race.round, race_name: race.race_name, order: p.order, saved_at: p.saved_at, synced: true }))
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn, loaded, locked, race?.season, race?.round]);
+
   const persist = (ids: string[]) => {
     if (!race) return;
-    save({ season: race.season, round: race.round, race_name: race.race_name, order: ids, saved_at: new Date().toISOString() });
+    const next = { season: race.season, round: race.round, race_name: race.race_name, order: ids, saved_at: new Date().toISOString(), synced: false };
+    save(next);
+    if (signedIn) sync(next);
   };
 
   return (
@@ -72,6 +105,19 @@ export default function PredictScreen() {
                 </Txt>
               </View>
             </View>
+            {signedIn && picks && !locked ? (
+              syncError ? (
+                <Pressable onPress={() => sync(picks)} style={{ marginTop: 8 }}>
+                  <Txt variant="caption" color={c.down}>
+                    Couldn&apos;t send your picks to your groups. Tap to try again.
+                  </Txt>
+                </Pressable>
+              ) : (
+                <Txt variant="caption" muted style={{ marginTop: 8 }}>
+                  {picks.synced ? 'Saved to your groups.' : 'Saving to your groups…'}
+                </Txt>
+              )
+            ) : null}
             {!locked && picks ? (
               <Pressable onPress={() => persist(drivers.map((d) => d.driver_id))} style={{ marginTop: 10 }}>
                 <Txt variant="label" color={c.accent}>

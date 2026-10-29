@@ -5,7 +5,8 @@ import type { ResultRow } from './types';
 
 const PREFIX = 'picks:';
 
-export type Picks = { season: number; round: number; race_name: string; order: string[]; saved_at: string };
+// synced: whether this exact order has been saved to the server for friend groups.
+export type Picks = { season: number; round: number; race_name: string; order: string[]; saved_at: string; synced?: boolean };
 
 export const picksKey = (season: number, round: number) => `${PREFIX}${season}-${round}`;
 

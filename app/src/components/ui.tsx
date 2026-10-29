@@ -6,6 +6,8 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  TextInputProps,
   TextProps,
   View,
   ViewStyle,
@@ -192,12 +194,62 @@ export function Message({ title, body }: { title: string; body?: string }) {
   );
 }
 
+export function Field(props: TextInputProps) {
+  const c = useColors();
+  return (
+    <TextInput
+      placeholderTextColor={c.muted}
+      {...props}
+      style={[styles.field, { color: c.text, backgroundColor: c.surfaceAlt, borderColor: c.border }, props.style]}
+    />
+  );
+}
+
+export function Button({
+  label,
+  onPress,
+  kind = 'primary',
+  busy,
+  disabled,
+  style,
+}: {
+  label: string;
+  onPress: () => void;
+  kind?: 'primary' | 'secondary' | 'danger';
+  busy?: boolean;
+  disabled?: boolean;
+  style?: ViewStyle;
+}) {
+  const c = useColors();
+  const bg = kind === 'primary' ? c.accent : c.surfaceAlt;
+  const fg = kind === 'primary' ? c.accentText : kind === 'danger' ? c.down : c.text;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled || busy}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.button, { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.8 : 1 }, style]}
+    >
+      {busy ? <ActivityIndicator color={fg} /> : <Txt variant="label" color={fg} style={{ fontSize: 15 }}>{label}</Txt>}
+    </Pressable>
+  );
+}
+
 export function Divider() {
   const c = useColors();
   return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.border, marginLeft: 16 }} />;
 }
 
 const styles = StyleSheet.create({
+  field: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+  },
+  button: { height: 44, borderRadius: 10, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 12 },
   card: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, marginHorizontal: 16, overflow: 'hidden' },
   section: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginTop: 24, marginBottom: 10 },

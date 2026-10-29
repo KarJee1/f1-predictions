@@ -17,7 +17,8 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
-import { palette, useScheme } from '@/src/theme';
+import { AccountProvider } from '@/src/account';
+import { fonts, palette, useScheme } from '@/src/theme';
 import { ThemePreferenceProvider } from '@/src/ThemePreference';
 
 export { ErrorBoundary } from 'expo-router';
@@ -53,9 +54,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
-        <ThemePreferenceProvider>
-          <RootNav />
-        </ThemePreferenceProvider>
+        <AccountProvider>
+          <ThemePreferenceProvider>
+            <RootNav />
+          </ThemePreferenceProvider>
+        </AccountProvider>
       </PersistQueryClientProvider>
     </GestureHandlerRootView>
   );
@@ -77,6 +80,18 @@ function RootNav() {
         <Stack.Screen
           name="driver/[id]"
           options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: c.background, width: '100%', maxWidth: 760, alignSelf: 'center' } }}
+        />
+        <Stack.Screen
+          name="group/[id]"
+          options={{
+            headerShown: true,
+            headerBackTitle: 'Groups',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: c.background },
+            headerTitleStyle: { fontFamily: fonts.bold },
+            headerTintColor: c.accent,
+            contentStyle: { backgroundColor: c.background, width: '100%', maxWidth: 760, alignSelf: 'center' },
+          }}
         />
         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
       </Stack>

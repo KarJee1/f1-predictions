@@ -1,9 +1,12 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Card, Divider, SectionTitle, Txt } from '@/src/components/ui';
+import { useAccount } from '@/src/account';
+import { API_URL } from '@/src/api';
+import { Button, Card, Divider, Field, SectionTitle, Txt } from '@/src/components/ui';
 import { useColors } from '@/src/theme';
 import { Preference, useThemePreference } from '@/src/ThemePreference';
 
@@ -50,6 +53,8 @@ export default function SettingsScreen() {
         ))}
       </Card>
 
+      <AccountSection />
+
       <SectionTitle>About</SectionTitle>
       <Card style={{ padding: 14 }}>
         <Txt>
@@ -64,7 +69,7 @@ export default function SettingsScreen() {
 
       <SectionTitle>Data</SectionTitle>
       <Card>
-        {CREDITS.map((cr, i) => (
+        {[...CREDITS, { label: 'Privacy policy', url: `${API_URL}/privacy` }].map((cr, i) => (
           <View key={cr.url}>
             {i > 0 ? <Divider /> : null}
             <Pressable onPress={() => WebBrowser.openBrowserAsync(cr.url)} style={styles.row}>
@@ -77,6 +82,84 @@ export default function SettingsScreen() {
         Version {Constants.expoConfig?.version}
       </Txt>
     </ScrollView>
+  );
+}
+
+function AccountSection() {
+  const c = useColors();
+  const { signedIn, me, setName, signOut, deleteAccount } = useAccount();
+  const [editing, setEditing] = useState(false);
+  const [name, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!signedIn) return null;
+
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await fn();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmDelete = () => {
+    const go = () => run(deleteAccount);
+    if (Platform.OS === 'web') return go();
+    Alert.alert(
+      'Delete your account?',
+      'This permanently deletes your account, your synced picks and points, and removes you from every group. Picks saved on this phone stay.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete account', style: 'destructive', onPress: go },
+      ],
+    );
+  };
+
+  return (
+    <>
+      <SectionTitle>Account</SectionTitle>
+      <Card>
+        {editing ? (
+          <View style={{ padding: 14, gap: 8 }}>
+            <Field value={name} onChangeText={setValue} placeholder="Your name" maxLength={30} autoFocus />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                label="Save"
+                busy={busy}
+                disabled={!name.trim()}
+                onPress={() => run(async () => { await setName(name.trim()); setEditing(false); })}
+                style={{ flex: 1 }}
+              />
+              <Button label="Cancel" kind="secondary" onPress={() => setEditing(false)} style={{ flex: 1 }} />
+            </View>
+          </View>
+        ) : (
+          <Pressable onPress={() => { setValue(me?.name ?? ''); setEditing(true); }} style={styles.row}>
+            <Txt style={{ flex: 1 }}>Name in groups</Txt>
+            <Txt muted>{me?.name}</Txt>
+          </Pressable>
+        )}
+        <Divider />
+        <Pressable onPress={() => run(signOut)} style={styles.row}>
+          <Txt style={{ flex: 1 }}>Sign out</Txt>
+        </Pressable>
+        <Divider />
+        <Pressable onPress={confirmDelete} style={styles.row} disabled={busy}>
+          <Txt color={c.down} style={{ flex: 1 }}>
+            Delete account
+          </Txt>
+        </Pressable>
+      </Card>
+      {error ? (
+        <Txt variant="caption" color={c.down} style={{ paddingHorizontal: 20, marginTop: 6 }}>
+          {error}
+        </Txt>
+      ) : null}
+    </>
   );
 }
 
