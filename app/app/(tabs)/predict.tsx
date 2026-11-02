@@ -1,15 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError, useAccount } from '@/src/account';
 import { fetchPrediction, fetchResults, NotFound, useMeta, usePrediction } from '@/src/api';
 import { DragList } from '@/src/components/DragList';
-import { Card, Divider, DriverName, Loading, Message, SectionTitle, TeamStripe, Txt } from '@/src/components/ui';
+import { SHARE_WIDTH, ShareCard } from '@/src/components/ShareCard';
+import { Button, Card, Divider, DriverName, Loading, Message, SectionTitle, TeamStripe, Txt } from '@/src/components/ui';
 import { sessionTime } from '@/src/format';
 import { allPicks, Picks, POINTS_PER_DRIVER, scoreOrder, usePicks } from '@/src/picks';
+import { syncReminder, useReminders } from '@/src/reminders';
 import { useColors } from '@/src/theme';
 import type { DriverPrediction, Prediction } from '@/src/types';
 
@@ -70,7 +74,28 @@ export default function PredictScreen() {
     if (!race) return;
     const next = { season: race.season, round: race.round, race_name: race.race_name, order: ids, saved_at: new Date().toISOString(), synced: false };
     save(next);
+    syncReminder(race, true);
     if (signedIn) sync(next);
+  };
+
+  const shareRef = useRef<ComponentRef<typeof View>>(null);
+  const [sharing, setSharing] = useState(false);
+  const share = async () => {
+    if (!race) return;
+    setSharing(true);
+    try {
+      if (Platform.OS === 'web') {
+        const top = order.slice(0, 3).map((id, i) => `${i + 1}. ${byId.get(id)?.last_name}`);
+        await Share.share({ message: `My ${race.race_name} prediction: ${top.join(', ')}. Made with F1 Predictions.` });
+      } else {
+        const uri = await captureRef(shareRef, { format: 'png', quality: 1, width: SHARE_WIDTH * 3 });
+        await Share.share({ url: uri });
+      }
+    } catch {
+      // Cancelled, or the capture failed; nothing to tell the user.
+    } finally {
+      setSharing(false);
+    }
   };
 
   return (
@@ -118,14 +143,21 @@ export default function PredictScreen() {
                 </Txt>
               )
             ) : null}
-            {!locked && picks ? (
-              <Pressable onPress={() => persist(drivers.map((d) => d.driver_id))} style={{ marginTop: 10 }}>
-                <Txt variant="label" color={c.accent}>
-                  Reset to the model&apos;s order
-                </Txt>
-              </Pressable>
+            {picks ? (
+              <View style={styles.actions}>
+                <Button label="Share my picks" kind="secondary" onPress={share} busy={sharing} />
+                {!locked ? (
+                  <Pressable onPress={() => persist(drivers.map((d) => d.driver_id))} hitSlop={8}>
+                    <Txt variant="label" color={c.accent}>
+                      Reset to the model&apos;s order
+                    </Txt>
+                  </Pressable>
+                ) : null}
+              </View>
             ) : null}
           </Card>
+
+          {!locked ? <ReminderPrompt race={race} /> : null}
 
           {locked ? <CurrentRaceScore picks={picks} prediction={prediction.data!} /> : null}
 
@@ -143,7 +175,51 @@ export default function PredictScreen() {
       )}
 
       <SeasonTally />
+
+      {picks && race && drivers.length ? (
+        <View style={styles.offscreen} pointerEvents="none">
+          <ShareCard
+            ref={shareRef}
+            raceName={race.race_name}
+            season={race.season}
+            drivers={order.map((id) => byId.get(id)!).filter(Boolean)}
+            modelWinner={drivers[0]}
+          />
+        </View>
+      ) : null}
     </ScrollView>
+  );
+}
+
+const DISMISSED = 'reminder-prompt-dismissed';
+
+/** Offers the lights-out reminder once, the first time someone uses the Predict tab. */
+function ReminderPrompt({ race }: { race: NonNullable<ReturnType<typeof useMeta>['data']>['next_race'] }) {
+  const { status, setEnabled } = useReminders(race);
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem(DISMISSED).then((v) => setDismissed(v === '1')).catch(() => setDismissed(false));
+  }, []);
+  if (status !== 'undetermined' || dismissed !== false) return null;
+  const close = () => {
+    setDismissed(true);
+    AsyncStorage.setItem(DISMISSED, '1').catch(() => {});
+  };
+  return (
+    <Card style={{ padding: 14, marginBottom: 12 }}>
+      <Txt variant="heading">Get a reminder before lights out?</Txt>
+      <Txt variant="caption" muted style={{ marginTop: 2 }}>
+        One notification an hour before each race, only if you haven&apos;t made your picks yet.
+      </Txt>
+      <View style={[styles.actions, { marginTop: 10 }]}>
+        <Button label="Remind me" onPress={() => setEnabled(true).finally(close)} />
+        <Pressable onPress={close} hitSlop={8}>
+          <Txt variant="label" muted>
+            Not now
+          </Txt>
+        </Pressable>
+      </View>
+    </Card>
   );
 }
 
@@ -273,5 +349,7 @@ function SeasonTally() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', height: ROW, paddingLeft: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12 },
+  offscreen: { position: 'absolute', left: -10000, top: 0 },
   tallyRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12 },
 });

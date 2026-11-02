@@ -4,14 +4,18 @@ import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { AccountProvider } from '@/src/account';
+import { useMeta } from '@/src/api';
+import { Sentry } from '@/src/monitoring';
+import { syncReminder, useReminderTaps } from '@/src/reminders';
 import { fonts, palette, useScheme } from '@/src/theme';
 import { ThemePreferenceProvider } from '@/src/ThemePreference';
 
@@ -27,7 +31,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: WEEK 
 const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'query-cache' });
 const persistOptions = { persister, maxAge: WEEK, buster: Constants.expoConfig?.version ?? '' };
 
-export default function RootLayout() {
+function RootLayout() {
   const [loaded, error] = useFonts({
     'Archivo-Regular': require('../assets/fonts/Archivo-Regular.ttf'),
     'Archivo-Medium': require('../assets/fonts/Archivo-Medium.ttf'),
@@ -60,6 +64,22 @@ export default function RootLayout() {
   );
 }
 
+export default Sentry.wrap(RootLayout);
+
+// Keeps the pick reminder in step with the next race, and opens the app where a reminder points.
+function Reminders() {
+  const race = useMeta().data?.next_race;
+  useEffect(() => {
+    syncReminder(race);
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && syncReminder(race));
+    return () => sub.remove();
+  }, [race]);
+  useReminderTaps(openUrl);
+  return null;
+}
+
+const openUrl = (url: string) => router.navigate(url as never);
+
 function RootNav() {
   const scheme = useScheme();
   const c = palette[scheme];
@@ -71,6 +91,7 @@ function RootNav() {
   return (
     <ThemeProvider value={theme}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Reminders />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen

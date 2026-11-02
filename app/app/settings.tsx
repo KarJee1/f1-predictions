@@ -2,11 +2,12 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { useAccount } from '@/src/account';
-import { API_URL } from '@/src/api';
+import { API_URL, useMeta } from '@/src/api';
 import { Button, Card, Divider, Field, SectionTitle, Txt } from '@/src/components/ui';
+import { useReminders } from '@/src/reminders';
 import { useColors } from '@/src/theme';
 import { Preference, useThemePreference } from '@/src/ThemePreference';
 
@@ -52,6 +53,8 @@ export default function SettingsScreen() {
           </View>
         ))}
       </Card>
+
+      <RemindersSection />
 
       <AccountSection />
 
@@ -159,6 +162,38 @@ function AccountSection() {
           {error}
         </Txt>
       ) : null}
+    </>
+  );
+}
+
+function RemindersSection() {
+  const c = useColors();
+  const race = useMeta().data?.next_race;
+  const { status, setEnabled } = useReminders(race);
+  if (!status || status === 'unsupported') return null;
+  const toggle = async (on: boolean) => {
+    const ok = await setEnabled(on);
+    if (on && !ok) {
+      Alert.alert('Notifications are off', 'Turn on notifications for F1 Predictions in the Settings app to get reminders.', [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Open Settings', onPress: () => Linking.openSettings() },
+      ]);
+    }
+  };
+  return (
+    <>
+      <SectionTitle>Notifications</SectionTitle>
+      <Card>
+        <View style={styles.row}>
+          <View style={{ flex: 1, paddingRight: 12 }}>
+            <Txt>Pick reminders</Txt>
+            <Txt variant="caption" muted>
+              An hour before lights out, if you haven&apos;t made your picks
+            </Txt>
+          </View>
+          <Switch value={status === 'on'} onValueChange={toggle} trackColor={{ true: c.accent }} />
+        </View>
+      </Card>
     </>
   );
 }
