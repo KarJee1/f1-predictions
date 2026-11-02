@@ -7,14 +7,22 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://54bf6226e98f23d50d9482cb60960d05@o4512364574867456.ingest.us.sentry.io/4512364596232192"
+      }
     },
     "production": {
-      "env": { "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app" }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://f1-api-rbwkstg5rq-uc.a.run.app",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://54bf6226e98f23d50d9482cb60960d05@o4512364574867456.ingest.us.sentry.io/4512364596232192"
+      }
     }
   },
   "submit": {
