@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "REPLACE_WITH_EXISTING_BUNDLE_ID",
+      "bundleIdentifier": "com.karjee.f1predictv1",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
