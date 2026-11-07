@@ -1,0 +1,117 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import Constants from 'expo-constants';
+import { useFonts } from 'expo-font';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import 'react-native-reanimated';
+
+import { AccountProvider } from '@/src/account';
+import { useMeta } from '@/src/api';
+import { Sentry } from '@/src/monitoring';
+import { syncReminder, useReminderTaps } from '@/src/reminders';
+import { fonts, palette, useScheme } from '@/src/theme';
+import { ThemePreferenceProvider } from '@/src/ThemePreference';
+
+export { ErrorBoundary } from 'expo-router';
+
+export const unstable_settings = { anchor: '(tabs)' };
+
+SplashScreen.preventAutoHideAsync();
+
+// The last data the app loaded is kept on the device for a week, so it opens instantly and works offline.
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: WEEK } } });
+const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'query-cache' });
+const persistOptions = { persister, maxAge: WEEK, buster: Constants.expoConfig?.version ?? '' };
+
+function RootLayout() {
+  const [loaded, error] = useFonts({
+    'Archivo-Regular': require('../assets/fonts/Archivo-Regular.ttf'),
+    'Archivo-Medium': require('../assets/fonts/Archivo-Medium.ttf'),
+    'Archivo-SemiBold': require('../assets/fonts/Archivo-SemiBold.ttf'),
+    'Archivo-Bold': require('../assets/fonts/Archivo-Bold.ttf'),
+    'ArchivoExpanded-Bold': require('../assets/fonts/ArchivoExpanded-Bold.ttf'),
+    'ArchivoExpanded-Black': require('../assets/fonts/ArchivoExpanded-Black.ttf'),
+  });
+
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
+
+  useEffect(() => {
+    if (loaded) SplashScreen.hideAsync();
+  }, [loaded]);
+
+  if (!loaded) return null;
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+        <AccountProvider>
+          <ThemePreferenceProvider>
+            <RootNav />
+          </ThemePreferenceProvider>
+        </AccountProvider>
+      </PersistQueryClientProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+export default Sentry.wrap(RootLayout);
+
+// Keeps the pick reminder in step with the next race, and opens the app where a reminder points.
+function Reminders() {
+  const race = useMeta().data?.next_race;
+  useEffect(() => {
+    syncReminder(race);
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && syncReminder(race));
+    return () => sub.remove();
+  }, [race]);
+  useReminderTaps(openUrl);
+  return null;
+}
+
+const openUrl = (url: string) => router.navigate(url as never);
+
+function RootNav() {
+  const scheme = useScheme();
+  const c = palette[scheme];
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const theme = {
+    ...base,
+    colors: { ...base.colors, background: c.background, card: c.surface, text: c.text, border: c.border, primary: c.accent },
+  };
+  return (
+    <ThemeProvider value={theme}>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Reminders />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="driver/[id]"
+          options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: c.background, width: '100%', maxWidth: 760, alignSelf: 'center' } }}
+        />
+        <Stack.Screen
+          name="group/[id]"
+          options={{
+            headerShown: true,
+            headerBackTitle: 'Groups',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: c.background },
+            headerTitleStyle: { fontFamily: fonts.bold },
+            headerTintColor: c.accent,
+            contentStyle: { backgroundColor: c.background, width: '100%', maxWidth: 760, alignSelf: 'center' },
+          }}
+        />
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+      </Stack>
+    </ThemeProvider>
+  );
+}
